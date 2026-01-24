@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkinSense AI | Professional Dermal Dashboard</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="glass-container">
+        
+        <nav class="app-nav">
+            <div class="logo">✨ SkinSense</div>
+            <div class="nav-links">
+                <button class="nav-btn active" data-target="analysis">🔍 Scan & Analysis</button>
+                <button class="nav-btn" data-target="education">📚 Dermal Wiki</button>
+                <button class="nav-btn" data-target="history">⏳ History</button>
+                <button class="nav-btn" data-target="settings">⚙️ Settings</button>
+            </div>
+            
+            <div class="water-widget">
+                <p>💧 Hydration Goal</p>
+                <div class="water-progress-bar"><div id="waterFill" class="fill"></div></div>
+                <div class="water-actions">
+                    <span id="waterVol">0.0</span> / <span id="targetVol">2.5</span>L
+                    <button onclick="addWater()" class="add-btn">+</button>
+                </div>
+            </div>
+        </nav>
+
+        <main class="content-area">
+            
+            <section id="view-analysis" class="view">
+                <div class="dashboard-top">
+                    <div class="motivation-card">
+                        <div class="quote-wrap">
+                            <span class="pulse-icon">✨</span>
+                            <p id="dailyQuote">"Your skin is a reflection of your consistency."</p>
+                        </div>
+                    </div>
+                    
+                    <div class="diary-card">
+                        <div class="diary-header">
+                            <h4>📝 Skin Diary</h4>
+                            <span id="saveStatus">Auto-saving...</span>
+                        </div>
+                        <textarea id="diaryInput" placeholder="How does your skin feel today? (e.g. tight, oily, clear...)"></textarea>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="camera-card">
+                        <div class="video-wrap">
+                            <video id="webcam" autoplay playsinline muted></video>
+                            <div id="scanLine" class="scan-line"></div>
+                        </div>
+                        <button id="captureBtn" class="primary-btn">Analyze My Skin</button>
+                    </div>
+
+                    <div class="results-card" id="resultsCard">
+                        <div id="resultPlaceholder">
+                            <h3>Awaiting Analysis</h3>
+                            <p>Position your face in natural light for the most accurate reading.</p>
+                        </div>
+                        
+                        <div id="resultDisplay" style="display:none;">
+                            <div class="time-badge" id="timeBadge">Morning Routine</div>
+                            <h2 id="skinLabel">Detecting...</h2>
+                            <p class="ingredient-callout"><strong>Recommended Active:</strong> <span id="activeIngredient">--</span></p>
+                            
+                            <div class="result-scroll">
+                                <div class="info-sec">
+                                    <h4>🧴 Targeted Routine (Epidermal)</h4>
+                                    <ul id="routineList" class="expanded-list"></ul>
+                                </div>
+
+                                <div class="info-sec">
+                                    <h4>🥗 Dermal Nutrition (Internal)</h4>
+                                    <div id="dietList" class="diet-grid"></div>
+                                </div>
+
+                                <div class="info-sec">
+                                    <h4>🛒 Recommended Products</h4>
+                                    <div id="productList" class="product-shelf"></div>
+                                </div>
+                            </div>
+                            <button id="downloadPdf" class="pdf-btn">📄 Get Professional Report</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="view-education" class="view" style="display:none;">
+                <div class="wiki-header">
+                    <h2>Dermal Academy</h2>
+                    <p>Understanding the science of your human envelope.</p>
+                </div>
+
+                <div class="wiki-grid">
+                    <div class="wiki-card wide">
+                        <h3>Layered Anatomy</h3>
+                        
+
+[Image of the structure of human skin layers]
+
+                        <div class="wiki-flex">
+                            <p><strong>Epidermis:</strong> The surface. This is what the AI scans. Most skincare routines focus on repairing this barrier.</p>
+                            <p><strong>Dermis:</strong> The structural layer. This is where your **diet** and **hydration** work to support collagen and elasticity.</p>
+                        </div>
+                    </div>
+
+                    <div class="wiki-card">
+                        <h3>Condition Mapping</h3>
+                        
+                        <p>Learn how inflammation travels from deep within the glands in the Dermis to the visible surface of the Epidermis.</p>
+                    </div>
+
+                    <div class="wiki-card">
+                        <h3>🔬 Key Terms</h3>
+                        <div class="glossary-list">
+                            <details><summary>Ceramides</summary><p>Lipids that hold the skin barrier together.</p></details>
+                            <details><summary>Niacinamide</summary><p>Vitamin B3 that regulates oil and calms redness.</p></details>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="view-history" class="view" style="display:none;">
+                <div class="header-flex">
+                    <h2>Analysis History</h2>
+                    <button onclick="wipeHistory()" class="danger-btn">Clear Logs</button>
+                </div>
+                <div id="historyLog" class="history-list"></div>
+            </section>
+
+            <section id="view-settings" class="view" style="display:none;">
+                <h2>Preferences</h2>
+                <div class="settings-card">
+                    <div class="setting-item">
+                        <span>Display Theme</span>
+                        <button id="themeToggle" class="toggle-btn">🌙 Dark Mode</button>
+                    </div>
+                    <div class="setting-item">
+                        <span>Daily Hydration Goal (Liters)</span>
+                        <input type="number" id="goalInput" value="2.5" step="0.1" class="num-input">
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <div class="chat-wrapper chat-minimized" id="chatBox">
+            <div class="chat-head" onclick="toggleChat()">
+                <span>💬 SkinSense Assistant</span>
+            </div>
+            <div class="chat-body">
+                <div id="chatMsgs" class="chat-msgs">
+                    <div class="bot-msg">Welcome! Ask me about SPF, Retinol, or the Dermis!</div>
+                </div>
+                <div class="chat-input">
+                    <input type="text" id="chatInput" placeholder="Type a message...">
+                    <button id="sendMsg">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
