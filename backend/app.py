@@ -14,7 +14,7 @@ app.config['SECRET_KEY'] = 'skinsense_ultimate_2026'
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 
-MODEL_PATH = os.path.join("model", "skin_model.h5")
+MODEL_PATH = os.path.join("..", "training", "best_model.h5")
 CLASSES = ["Acne", "Dry", "Normal", "Oily"]
 
 
