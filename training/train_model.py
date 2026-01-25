@@ -1,96 +1,143 @@
 import os
-from keras.applications import MobileNetV2
-from keras.models import Model
-from keras.layers import Dense, GlobalAveragePooling2D, Dropout, BatchNormalization
-from keras.preprocessing.image import ImageDataGenerator
-from keras.optimizers import Adam
-from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.applications import MobileNetV2
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Dropout
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
+from tensorflow.keras import regularizers
 
-# 1. ENHANCED DATA AUGMENTATION
-# Accuracy > 95% requires the model to be invariant to lighting and angle.
+
+BASE_DIR = os.path.join("..", "dataset")
+TRAIN_DIR = os.path.join(BASE_DIR, "train")
+VALID_DIR = os.path.join(BASE_DIR, "valid")
+TEST_DIR = os.path.join(BASE_DIR, "test")
+
+
+IMG_SIZE = (224, 224)
+BATCH_SIZE = 32
+EPOCHS = 40
+INITIAL_LR = 1e-4
+FINE_TUNE_LR = 1e-5
+
+
 train_datagen = ImageDataGenerator(
-    rescale=1./255,
+    preprocessing_function=tf.keras.applications.mobilenet_v2.preprocess_input,
     rotation_range=30,
-    width_shift_range=0.15,
-    height_shift_range=0.15,
-    brightness_range=[0.8, 1.2], # Critical for skin tones
+    width_shift_range=0.2,
+    height_shift_range=0.2,
+    shear_range=0.2,
+    zoom_range=0.2,
     horizontal_flip=True,
-    vertical_flip=True,         # Skin patches can be any orientation
-    zoom_range=0.3,
-    fill_mode='reflect'         # Better for skin textures than 'nearest'
+    vertical_flip=False,     
+    brightness_range=[0.7, 1.3],
+    fill_mode='nearest'
 )
 
-valid_datagen = ImageDataGenerator(rescale=1./255)
+valid_datagen = ImageDataGenerator(
+    preprocessing_function=tf.keras.applications.mobilenet_v2.preprocess_input
+)
 
 train_generator = train_datagen.flow_from_directory(
-    os.path.join("dataset", "train"),
-    target_size=(224, 224),
-    batch_size=16, # Smaller batch size often helps convergence in fine-tuning
+    TRAIN_DIR,
+    target_size=IMG_SIZE,
+    batch_size=BATCH_SIZE,
     class_mode='categorical'
 )
 
 valid_generator = valid_datagen.flow_from_directory(
-    os.path.join("dataset", "valid"),
-    target_size=(224, 224),
-    batch_size=16,
+    VALID_DIR,
+    target_size=IMG_SIZE,
+    batch_size=BATCH_SIZE,
     class_mode='categorical'
 )
 
-# 2. BUILD MODEL
-base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(224,224,3))
 
-# Start by unfreezing the last 20 layers for specialized feature extraction
-# This is the secret to hitting > 95%
-base_model.trainable = True
-for layer in base_model.layers[:-20]:
-    layer.trainable = False
+base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+base_model.trainable = False  # freeze initially
 
-x = base_model.output
-x = GlobalAveragePooling2D()(x)
-x = BatchNormalization()(x) # Stabilizes training for higher accuracy
-x = Dense(256, activation='relu')(x)
-x = Dropout(0.4)(x)
-predictions = Dense(train_generator.num_classes, activation='softmax')(x)
+model = Sequential([
+    base_model,
+    GlobalAveragePooling2D(),
+    Dropout(0.4),
+    Dense(128, activation='relu', kernel_regularizer=regularizers.l2(0.01)),
+    Dropout(0.3),
+    Dense(train_generator.num_classes, activation='softmax')
+])
 
-model = Model(inputs=base_model.input, outputs=predictions)
-
-# 3. ADVANCED COMPILATION
 model.compile(
-    optimizer=Adam(learning_rate=1e-5), # Lower learning rate for fine-tuning
+    optimizer=Adam(learning_rate=INITIAL_LR),
     loss='categorical_crossentropy',
     metrics=['accuracy']
 )
 
-# 4. DYNAMIC CALLBACKS
-# ReduceLROnPlateau is the "Accuracy Booster"
-lr_reducer = ReduceLROnPlateau(
-    monitor='val_loss', 
-    factor=0.2, 
-    patience=3, 
-    min_lr=1e-7, 
-    verbose=1
-)
+model.summary()
 
+# -----------------------------
+# Callbacks
+# -----------------------------
 checkpoint = ModelCheckpoint(
-    "model/skin_model.h5", # Use .h5 for better Flask/Socket compatibility
-    monitor='val_accuracy',
+    "best_model.h5",
+    monitor="val_accuracy",
     save_best_only=True,
-    mode='max',
+    mode="max",
     verbose=1
 )
 
 early_stop = EarlyStopping(
-    monitor='val_accuracy',
-    patience=8,
+    monitor="val_accuracy",
+    patience=7,
     restore_best_weights=True
 )
 
-# 5. TRAIN
-model.fit(
-    train_generator,
-    validation_data=valid_generator,
-    epochs=50, # Give it more room to reach the 95% peak
-    callbacks=[checkpoint, early_stop, lr_reducer]
+reduce_lr = ReduceLROnPlateau(
+    monitor='val_loss',
+    factor=0.5,
+    patience=3,
+    min_lr=1e-6,
+    verbose=1
 )
 
-model.save("model/skin_model_final.h5")
+
+print("\n--- Stage 1: Training top layers ---")
+history1 = model.fit(
+    train_generator,
+    epochs=EPOCHS//2,
+    validation_data=valid_generator,
+    callbacks=[checkpoint, early_stop, reduce_lr]
+)
+
+
+print("\n--- Stage 2: Fine-tuning MobileNetV2 top layers ---")
+base_model.trainable = True
+
+
+for layer in base_model.layers[:-50]:
+    layer.trainable = False
+
+model.compile(
+    optimizer=Adam(learning_rate=FINE_TUNE_LR),
+    loss='categorical_crossentropy',
+    metrics=['accuracy']
+)
+
+history2 = model.fit(
+    train_generator,
+    epochs=EPOCHS//2,
+    validation_data=valid_generator,
+    callbacks=[checkpoint, early_stop, reduce_lr]
+)
+
+
+test_datagen = ImageDataGenerator(preprocessing_function=tf.keras.applications.mobilenet_v2.preprocess_input)
+test_generator = test_datagen.flow_from_directory(
+    TEST_DIR,
+    target_size=IMG_SIZE,
+    batch_size=BATCH_SIZE,
+    class_mode='categorical',
+    shuffle=False
+)
+
+test_loss, test_acc = model.evaluate(test_generator)
+print(f"\nTest Accuracy: {test_acc * 100:.2f}%")

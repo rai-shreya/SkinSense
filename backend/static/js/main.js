@@ -1,23 +1,19 @@
-/**
- * SKINSENSE AI - MASTER CONTROLLER
- * Features: Deep Skin Analysis, Dermal Nutrition, History Persistence, Chatbot
- */
 
 const socket = io();
 let currentData = null;
 let waterConsumed = 0;
 
-// --- 1. INITIALIZATION & SETUP ---
+
 document.addEventListener('DOMContentLoaded', () => {
     initWebcam();
     initTheme();
     setupNavigation();
     initMotivation();
     loadDiary();
-    syncSettings(); // Load water goals & history immediately
+    syncSettings(); 
 });
 
-// Initialize Webcam
+
 async function initWebcam() {
     const video = document.getElementById('webcam');
     try {
@@ -31,69 +27,69 @@ async function initWebcam() {
     }
 }
 
-// --- 2. SINGLE PAGE APPLICATION (SPA) NAVIGATION ---
+
 function setupNavigation() {
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const target = e.target.dataset.target;
             
-            // Switch Views
+            
             document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
             document.getElementById(`view-${target}`).style.display = 'block';
             
-            // Update Active Tab
+            
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
 
-            // Refresh Data on Tab Switch
+            
             if(target === 'history') renderHistory();
             if(target === 'settings') syncSettings();
         });
     });
 }
 
-// --- 3. AI ANALYSIS ENGINE ---
+
 document.getElementById('captureBtn').onclick = () => {
     const line = document.getElementById('scanLine');
-    line.style.display = 'block'; // Start scanning animation
+    line.style.display = 'block'; 
     
-    // Capture Frame
+   
     const canvas = document.createElement('canvas');
     const video = document.getElementById('webcam');
     canvas.width = 224; canvas.height = 224;
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0, 224, 224);
     
-    // Send to Backend
+ 
     const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
     socket.emit('frame', dataUrl);
 };
 
-// Handle Results
+
 socket.on('result', (res) => {
     currentData = res;
     document.getElementById('scanLine').style.display = 'none';
     document.getElementById('resultPlaceholder').style.display = 'none';
     document.getElementById('resultDisplay').style.display = 'block';
 
-    // A. Update Basic Info
+   
     document.getElementById('timeBadge').innerText = `${res.time_of_day} Analysis`;
     document.getElementById('skinLabel').innerText = `${res.skin} Skin Detected`;
     document.getElementById('activeIngredient').innerText = res.active_ingredient;
     
-    // B. Render Detailed Routine (Epidermal Focus)
+   
     const routineHTML = res.routine.map(step => `
         <li><span style="color:var(--accent)">✔</span> ${step}</li>
     `).join('');
     document.getElementById('routineList').innerHTML = routineHTML;
 
-    // C. Render Diet (Dermal Focus)
+   
     const dietHTML = res.diet.map(item => `
         <div class="diet-item"><span>🥗</span> ${item}</div>
     `).join('');
     document.getElementById('dietList').innerHTML = dietHTML;
 
-    // D. Render Products
+    
     const productHTML = res.products.map(p => `
         <div class="product-card">
             <p>${p}</p>
@@ -102,11 +98,11 @@ socket.on('result', (res) => {
     `).join('');
     document.getElementById('productList').innerHTML = productHTML;
 
-    // E. Save to History
+   
     saveHistory(res.skin);
 });
 
-// --- 4. HISTORY & PERSISTENCE ---
+
 function saveHistory(type) {
     const history = JSON.parse(localStorage.getItem('skin_history') || '[]');
     const entry = {
@@ -145,7 +141,7 @@ window.wipeHistory = () => {
     }
 };
 
-// --- 5. SETTINGS & DERMAL HYDRATION ---
+
 function syncSettings() {
     const goal = localStorage.getItem('water_goal') || "2.5";
     document.getElementById('goalInput').value = goal;
@@ -171,7 +167,7 @@ function updateWaterUI() {
     document.getElementById('waterFill').style.width = percent + "%";
 }
 
-// --- 6. DIARY & MOTIVATION ---
+
 function initMotivation() {
     const quotes = [
         "Your skin is an investment, not an expense.",
@@ -193,7 +189,7 @@ function loadDiary() {
     diaryInput.value = localStorage.getItem('skin_diary_content') || "";
 }
 
-// --- 7. UTILS: THEME & PDF ---
+
 function initTheme() {
     const saved = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', saved);
@@ -212,14 +208,14 @@ document.getElementById('downloadPdf').onclick = () => {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     
-    // Branding
+    
     doc.setFillColor(255, 117, 140);
     doc.rect(0, 0, 210, 25, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(20);
     doc.text("SkinSense AI - Professional Report", 15, 17);
     
-    // Content
+    
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(14);
     doc.text(`Skin Analysis: ${currentData.skin}`, 15, 40);
@@ -237,7 +233,7 @@ document.getElementById('downloadPdf').onclick = () => {
     doc.save(`SkinSense_${currentData.skin}.pdf`);
 };
 
-// --- 8. INTELLIGENT CHATBOT ---
+
 window.toggleChat = () => document.getElementById('chatBox').classList.toggle('chat-minimized');
 
 document.getElementById('sendMsg').onclick = () => {

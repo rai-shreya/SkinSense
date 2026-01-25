@@ -1,5 +1,6 @@
+tensorflow-macos
+tensorflow-metal
 flask
 flask-socketio
 opencv-python
-tensorflow
 numpy

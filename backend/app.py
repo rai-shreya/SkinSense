@@ -7,21 +7,20 @@ from datetime import datetime
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 
-# --- 1. APP CONFIGURATION ---
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'skinsense_ultimate_2026'
-# cors_allowed_origins="*" allows connection from local network devices
+
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# --- 2. AI ENGINE SETUP ---
-# Ensure your model is saved as 'skin_model.h5' in a folder named 'model'
+
 MODEL_PATH = os.path.join("model", "skin_model.h5")
 CLASSES = ["Acne", "Dry", "Normal", "Oily"]
 
-# Load the model safely
+
 try:
     if os.path.exists(MODEL_PATH):
-        # compile=False avoids errors if custom metrics were used during training
+        
         model = tf.keras.models.load_model(MODEL_PATH, compile=False)
         print(f"✅ AI Engine: Online. Loaded {MODEL_PATH}")
     else:
@@ -31,8 +30,7 @@ except Exception as e:
     model = None
     print(f"❌ AI Engine Error: {e}")
 
-# --- 3. THE KNOWLEDGE BASE (Dermal & Epidermal Logic) ---
-# This dictionary bridges the visual symptoms (Epidermis) with internal health (Dermis)
+
 SKIN_DATA = {
     "Dry": {
         "routine": [
@@ -128,29 +126,25 @@ SKIN_DATA = {
     }
 }
 
-# --- 4. FLASK ROUTES ---
+
 @app.route('/')
 def index():
-    # Renders the UI found in templates/index.html
     return render_template('index.html')
 
-# --- 5. REAL-TIME SOCKET HANDLER ---
+
 @socketio.on('frame')
 def handle_inference(data_url):
     try:
-        # A. Decode Image
+    
         header, encoded = data_url.split(",", 1)
         nparr = np.frombuffer(base64.b64decode(encoded), np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-        # B. AI Prediction Logic
+        
         if model:
-            # Resize to 224x224 (Standard for MobileNet/ResNet)
             img_resized = cv2.resize(img, (224, 224))
-            # Normalize pixel values to [0, 1]
             img_array = np.expand_dims(img_resized, axis=0) / 255.0
             
-            # Inference
             preds = model.predict(img_array, verbose=0)
             idx = np.argmax(preds[0])
             result_key = CLASSES[idx]
@@ -160,11 +154,11 @@ def handle_inference(data_url):
             result_key = "Normal"
             confidence = 0.98
 
-        # C. Time Context (AM vs PM)
+        
         current_hour = datetime.now().hour
         time_key = "AM" if 5 <= current_hour < 17 else "PM"
         
-        # D. Construct Response Payload
+     
         details = SKIN_DATA[result_key]
         response = {
             "skin": result_key,
@@ -176,7 +170,7 @@ def handle_inference(data_url):
             "products": details["products"]
         }
 
-        # E. Send back to Frontend
+        
         emit('result', response)
 
     except Exception as e:
@@ -184,5 +178,5 @@ def handle_inference(data_url):
         emit('error', {'msg': 'Processing failed. Check lighting.'})
 
 if __name__ == '__main__':
-    # Debug=True allows auto-restart on code changes
+    
     socketio.run(app, debug=True, host='0.0.0.0', port=5000)
