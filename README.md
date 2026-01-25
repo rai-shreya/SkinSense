@@ -1,5 +1,4 @@
-SkiSkinSense AI
-SkinSense AI is a high performance, full stack web application that combines computer vision with dermatological science. By analyzing the Epidermis (surface layer) through a live webcam feed, the system provides a holistic treatment strategy that includes multi-step skincare routines and Dermal Nutrition (internal health) to support the skin's structural integrity.
+SkinSense is a high performance, full stack web application that combines computer vision with dermatological science. By analyzing the Epidermis (surface layer) through a live webcam feed, the system provides a holistic treatment strategy that includes multi-step skincare routines and Dermal Nutrition (internal health) to support the skin's structural integrity.
 
 
 
