@@ -24,7 +24,7 @@ SkinSense AI treats the skin as a dynamic organ rather than just a surface. Our 
 
 2.The Dermis: The foundation containing collagen, elastin, and blood vessels. Our app provides dietary and hydration guidance because topical products cannot easily reach this layer; it must be fed from within.
 
-🛠️Tech Stack
+Tech Stack
 Frontend: HTML5, CSS3 (Glassmorphism), Vanilla JavaScript (ES6+).
 
 Backend: Python 3.x, Flask, Flask-SocketIO (for low-latency frame processing).
