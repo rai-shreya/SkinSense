@@ -17,14 +17,14 @@ vi.Glassmorphism UI: A premium, responsive design with native Light/Dark mode su
 
 vii.Professional Reporting: One-click PDF generation of the analysis results and prescribed routines.
 
-🧬 Biological Approach: Beyond the Surface
+ Biological Approach: Beyond the Surface
 SkinSense AI treats the skin as a dynamic organ rather than just a surface. Our logic differentiates between the two primary layers:
 
 1.The Epidermis: The outermost barrier. Our AI identifies issues here (like sebum overproduction or dehydration) and suggests topicals to repair the acid mantle.
 
 2.The Dermis: The foundation containing collagen, elastin, and blood vessels. Our app provides dietary and hydration guidance because topical products cannot easily reach this layer; it must be fed from within.
 
-🛠️ Tech Stack
+🛠️Tech Stack
 Frontend: HTML5, CSS3 (Glassmorphism), Vanilla JavaScript (ES6+).
 
 Backend: Python 3.x, Flask, Flask-SocketIO (for low-latency frame processing).
