@@ -22,13 +22,13 @@ try:
     if os.path.exists(MODEL_PATH):
         
         model = tf.keras.models.load_model(MODEL_PATH, compile=False)
-        print(f"✅ AI Engine: Online. Loaded {MODEL_PATH}")
+        print(f" AI Engine: Online. Loaded {MODEL_PATH}")
     else:
         model = None
-        print("⚠️ AI Engine: Offline. Model not found. Running in SIMULATION MODE.")
+        print(" AI Engine: Offline. Model not found. Running in SIMULATION MODE.")
 except Exception as e:
     model = None
-    print(f"❌ AI Engine Error: {e}")
+    print(f" AI Engine Error: {e}")
 
 
 SKIN_DATA = {
@@ -42,10 +42,10 @@ SKIN_DATA = {
             "Step 6: SPF 50 (AM Only)"
         ],
         "diet": [
-            "🥑 Avocados & Olive Oil (Healthy Fats)",
-            "🐟 Salmon/Mackerel (Omega-3s)",
-            "🥜 Walnuts & Flaxseeds",
-            "💧 Minimum 2.8L Water Daily"
+            " Avocados & Olive Oil (Healthy Fats)",
+            "Salmon/Mackerel (Omega-3s)",
+            " Walnuts & Flaxseeds",
+            "Minimum 2.8L Water Daily"
         ],
         "products": [
             "CeraVe Hydrating Cleanser",
@@ -65,10 +65,10 @@ SKIN_DATA = {
             "Step 6: Retinol 0.2% (PM Only)"
         ],
         "diet": [
-            "🍵 Green Tea (Anti-androgenic)",
-            "🥕 Carrots (Vitamin A)",
-            "🍚 Brown Rice (Low Glycemic)",
-            "🚫 Avoid Dairy & Sugar Spikes"
+            " Green Tea (Anti-androgenic)",
+            "Carrots (Vitamin A)",
+            "Brown Rice (Low Glycemic)",
+            "Avoid Dairy & Sugar Spikes"
         ],
         "products": [
             "Paula's Choice 2% BHA",
@@ -88,10 +88,10 @@ SKIN_DATA = {
             "Step 6: Sleeping Mask"
         ],
         "diet": [
-            "🫐 Berries (Antioxidants)",
-            "🥦 Broccoli & Greens",
-            "🍳 Eggs & Lean Protein",
-            "🍊 Citrus Fruits (Vitamin C)"
+            "Berries (Antioxidants)",
+            " Broccoli & Greens",
+            " Eggs & Lean Protein",
+            " Citrus Fruits (Vitamin C)"
         ],
         "products": [
             "Kiehl's Ultra Facial Cream",
@@ -111,10 +111,10 @@ SKIN_DATA = {
             "Step 6: Hydrocolloid Patches"
         ],
         "diet": [
-            "🌿 Spearmint Tea (Hormonal Balance)",
-            "🍂 Turmeric (Anti-inflammatory)",
-            "🥣 Probiotic Yogurt (Gut Health)",
-            "🚫 Limit Whey Protein & Skim Milk"
+            "Spearmint Tea (Hormonal Balance)",
+            "Turmeric (Anti-inflammatory)",
+            "Probiotic Yogurt (Gut Health)",
+            "Limit Whey Protein & Skim Milk"
         ],
         "products": [
             "PanOxyl 4% Wash",
@@ -174,7 +174,7 @@ def handle_inference(data_url):
         emit('result', response)
 
     except Exception as e:
-        print(f"⚠️ Inference Error: {e}")
+        print(f"Inference Error: {e}")
         emit('error', {'msg': 'Processing failed. Check lighting.'})
 
 if __name__ == '__main__':
